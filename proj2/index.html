@@ -1,7 +1,254 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Mesh Editor</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+  <h1 align="middle">Project 2: Mesh Editor</h1>
+  <h2 align="middle">Samson Petrosyan, CS184-sme777</h2>
+
+  <br><br>
+
+  <div>
+
+    <h2 align="middle">Overview</h2>
+    <p>This project was super fun because I had a lot of experience with Bezier curves and surfaces but never really understood the inner workings of
+      it. Unfortunately, I started very very late, so I did not get to finish the last subproblem which I am sure would have been very insightful as well.
+      In this project, we start by working with Bezier curves and surfaces and implementing the famous de Casteljau algorithm. We then move on to working with
+      <i>Haldedge</i> data structure to represent objects using polygons. In addition, we implement edge splits and flips for these polygons, which are crucial for
+      upsampling polygon meshes.
+    </p>
+
+    <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+    <h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+
+    <p>
+      De Casteljau's algorithm constructs high dimensional curves by iteratively introducing auxiliary points computed using the <i>lerp</i> function.
+      Each of these new points is computed for a pair of points so that by the end of a layer, there will be <strong>n-1</strong> points (given initially we had n points).
+      This process is continued until there is only one point remaining, at which point, the algorithm stops. Now, the whole algorithm was built around this point,
+      because by toggling the value of <i>t</i> (which we will cover shortly), we get an evolution of the singular point, as a curve. The point <i>t</i> is
+      really a metric for computing how much of each point's coordinates should be given to the new auxiliary point. The value of <i>t</i> ranges from 0 to 1. In the pictures
+      below we show a list of 6 points that make up a Bezier curve.
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="bzc1.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 0.</figcaption>
+          </td>
+          <td>
+            <img src="bzc2.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 1.</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="bzc3.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 2.</figcaption>
+          </td>
+          <td>
+            <img src="bzc4.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 3.</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="bzc5.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 4.</figcaption>
+          </td>
+          <td>
+            <img src="bzc6.png" align="middle" width="400px" />
+            <figcaption align="middle">Iteration 5.</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="bzc7.png" align="middle" width="400px" />
+            <figcaption align="middle">Resulting curve and points.</figcaption>
+          </td>
+          <td>
+            <img src="bzc8.png" align="middle" width="400px" />
+            <figcaption align="middle">Adjusted curve and points.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+
+  <p>
+    An important thing to note is that when we scroll with the mouse, the blue points (and lines) change, but it seems like the red
+    dot always remains on the curve. This is exactly what the algorithm was trying to do. By scrolling the value of <i>t</i> in the range,
+    it is able to capture the evolution of the red point, and thus the final curve.
+  </p>
+
+    <h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
+
+    <p>
+      De Casteljau's algorithm extends to Bezier surfaces almost too naturally. In fact, we can generalize the de Casteljau algorithm to any dimension.
+      For 3D, we have two vectors and two points that we would like to evaluate. Recall that for 1D this was one vector and one point we wanted to evaluate.
+      These points are denoted as <i>u</i> and <i>v</i>. We start by running the <i>evaluate1D</i> algorithm for all rows of the provided matrix using
+      the value of <i>u</i>, and then running <i>evaluate1D</i> one more time with the output of the loop before but this time with <i>v</i>. A picture of the Bezier
+      surface teapot is shown below.
+
+    </p>
+
+    <div align="middle">
+        <img src="teapot.png" width="600px"/>
+    </div>
+    
+    <h2 align="middle">Section II: Sampling</h2>
+
+    <h3 align="middle">Part 3: Average normals for half-edge meshes</h3>
+
+    <p>
+      The hardest part about working in this section was understanding the <i>Halfedge</i> data structure. Initially, I thought I could just get to coding
+      and figure as I go. That ended up being a horrible idea and cost me a decent amount of time. So, I started from scratch and really tried to understand
+      what the data structure was trying to achieve. Once I got that out of the way, implementing this method was very straightforward. We traverse the mesh using
+      halfedges and keep a running sum of the normal of each face. Instead of naively going over all the triangles, we are careful in updating <i>Halfedge</i> such that
+      only faces which include the current vertex show up. In the end, we normalize the running sum and return that value. This is the area-weighted normal at a
+      given vertex. The picture of the teapot below illustrates the difference before and after applying the area-averaged normals.
+
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="aan1.png" align="middle" width="400px" />
+            <figcaption align="middle">Without area-averaged normals.</figcaption>
+          </td>
+          <td>
+            <img src="aa2.png" align="middle" width="400px" />
+            <figcaption align="middle">With area-averaged normals.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <h3 align="middle">Part 4: Half-edge flip</h3>
+
+    <p>
+      This and the next part are simply bookkeeping, which does not mean that's an easy thing to do. However, by this point, I was already very familiar with
+      the <i>Halfedge</i> data structure, so implementing this part was not too terrible. The thing that helped me the most was drawing the before and after
+      results of an edge flip. I tagged the <i>Halfedges</i> that would change, as well as other primitives (i.e. vertices, edges, faces). I labeled all <i>Halfedges</i>
+      for clarity and then moved on to swapping pointers until the desired outcome was reached. The few pictures below illustrate me having fun with edge flips.
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="part4-1.png" align="middle" width="400px" />
+            <figcaption align="middle">One edge flip.</figcaption>
+          </td>
+          <td>
+            <img src="part4-2.png" align="middle" width="400px" />
+            <figcaption align="middle">Three edge flips</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="part4-3.png" align="middle" width="400px" />
+            <figcaption align="middle">Multiple edge flips.</figcaption>
+          </td>
+          <td>
+            <img src="part4-4.png" align="middle" width="400px" />
+            <figcaption align="middle">Edge flips MATRIX.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      I was surprised not to have to debug at all for this part. I think I learned from my mistakes on the previous task and ended up doing
+      a lot of planning beforehand. What I found interesting was the existence of a degenerate case (i.e. last picture). I tried to find a way to
+      algorithmically identify when a degenerate case would occur but did not have much success.
+
+    </p>
+
+    <h3 align="middle">Part 5: Half-edge split</h3>
+
+    Much like the other part, this problem came down to a lot of bookkeeping. Splitting edges was a bit more difficult though because we needed to create
+    a few more data structures, but once that was done, the rest was again moving pointers around. The picture below shows splitting edges with and without
+    flipping edges.
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="part5-1.png" align="middle" width="400px" />
+            <figcaption align="middle">A few edge splits.</figcaption>
+          </td>
+          <td>
+            <img src="part5-2.png" align="middle" width="400px" />
+            <figcaption align="middle">More nested edge splits.</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="part5-3.png" align="middle" width="400px" />
+            <figcaption align="middle">Edge splits with flips.</figcaption>
+          </td>
+          <td>
+            <img src="part5-4.png" align="middle" width="400px" />
+            <figcaption align="middle">Edge splits with flips from top.</figcaption>
+          </td>
+        </tr>
+
+      </table>
+    </div>
+    <p>
+
+      Unlike the last part, I did have to do some debugging because the mesh was not being correctly displayed. After reviewing my notes and
+      implementation I realized that I was assigning a <i>Halfedge</i> to the wrong face. Updating that assignment ended up solving the issue.
+    </p>
+
+    <h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+
+    <p>
+      Left as an exercise for the reader.
+    </p>
+
+
+
+    <h2 align="middle">Section III: Optional Extra Credit</h2>
+    <p>If you are not participating in the optional mesh competition, don't worry about this section!</p>
+
+    <h3 align="middle">Part 7: Design your own mesh!</h3>
+    <p>No.</p>
+
+    <h4></h4>
+</body>
+
 </html>

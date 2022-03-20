@@ -1,7 +1,375 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-1 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>Samson Petrosyan  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3: PathTracer</h1>
+    <h2 align="middle">Samson Petrosyan</h2>
+
+    <div class="padded">
+        <p>
+            I learned a lot while working on this project. I do feel, however,
+            that the same concepts could have been taught through simpler means.
+        </p>
+
+        <p>
+            In this project, we covered the methods and routines of rendering realistic images. We start with the simple
+            concept of ray generation and intersection. Quickly, we find out that a naive implementation of ray tracing
+            will hinder us from rendering large and complicated structures. In part 2, we introduce and implement the bounding volume
+            hierarchy algorithm, which gives us an impressive speedup on rendering. In the second part of the project, we mostly deal with 
+            light sources, starting from direct illumination and going to global illumination, where light is allowed to bounce
+            multiple times (like in real-life). Finally, we implement adaptive sampling to save up precious computing power, while
+            still generating realistic images.
+        </p>
+       
+    <h2 align="middle">Part 1: Ray Generation and Intersection</h2>
+        <p>As the title suggests, in this section I developed a method for generating rays and doing
+            some primitive intersection tests. In the ray generation algorithm, we were given normalized
+            <i>x</i> and <i>y</i> coordinates, and needed to transform these into the world view from 
+            camera's field of view. I relied on the definition of corner vertices of the sensors for mapping
+            any coordinate in the image space to the camera space. It's important to note here, that the origin of the
+            ray is the position of the camera, so the camera is basically casting the rays, and that's exactly why we needed
+            to go through this series of transformations in the first place.
+        </p>
+
+        <p>
+            In addition to ray generation, I also implemented intersections tests for triangle and sphere shapes. To 
+            write, the algorithm, I relied on the mathematical models developed in the class. At the higher level, the triangle
+            intersection algorithm is no different for any dimensions (2D or 3D). in 3D the algorithm happened to have the name
+            Moller Trumbrone, which costs 1 division, 27 multiplications, and 17 additions as covered in the lecture. To verify that 
+            an intersection exists, we first make sure that the generated <i>t</i> value is between ray's <i>t_min</i> and
+            <i>t_max</i>, and second the computed barycentric coordinates are within the (0, 1) range.
+        </p>
+
+        <p>
+            Below, are some images with normal shading for relatively small <i>.dae</i> files.
+        </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBbunny.png" width="400px" />
+                    <figcaption align="middle">Bunny in the Room.</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/CBcoil.png" width="400px" />
+                        <figcaption align="middle">Coil in the Room.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBlucy.png" width="400px" />
+                    <figcaption align="middle">Lucy in the Room.</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/CBspheres.png" width="400px" />
+                        <figcaption align="middle">Spheres in the Room.</figcaption>
+                        </td>
+                </tr>
+            </table>
+        </div>
+        
+        <h2 align="middle">Part 2: Bounding Volume Hierarchy</h2>
+
+        <p>
+            This part alone taught me more C++ than I will ever need. Moving onwards, the idea of a bounding
+            volume hierarchy (BVH) is quite simple. Instead of checking whether there is an intersection for 
+            every single element on the scene, make a tree-like structure, that will re-route our test of intersection
+            depending on whether the ray intersects that box. In this version, we simply have a left and right child at every node,
+            so, in essence, this BVH is just a binary tree. The heuristic I chose for implementing the BVH algorithm is quite simple and verbose.
+            Since we have 3 axes to split about, I first figure out which axis would give a larger bounding box at a specific point. This point is
+            computed by the centroid of elements in the current node. When the algorithm fires up, all objects are in one bounding box. Based on
+            the criteria just discussed, we partition the iterator object provided in the function (which lists all the current objects), and then make 
+            two recursive calls for each right and left child of this node. The base case is when the number of elements in the node is below some threshold
+            <i>max_leaf_size</i>. 
+        </p>
+
+        <p>
+            Below are images with normal shading for relatively large <i>.dae</i> files (which we would not
+            be able to render without BVH).
+        </p>
+        <div align="center" >
+        <table style="width: 100%;">
+            <tr>
+                <td align="middle">
+                <img src="images/cow.png" width="400px" />
+                <figcaption align="middle">A cow.</figcaption>
+                </td>
+                <td align="middle">
+                    <img src="images/bettle.png" width="400px" />
+                    <figcaption align="middle">A bettle.</figcaption>
+                </td>
+            </tr>
+            <tr>
+                <td align="middle">
+                <img src="images/dragon.png" width="400px" />
+                <figcaption align="middle">A dragon.</figcaption>
+                </td>
+                <td align="middle">
+                    <img src="images/teapot.png" width="400px" />
+                    <figcaption align="middle">A teapot.</figcaption>
+                    </td>
+            </tr>
+        </table>
+    </div>
+
+    <p>The few pictures below illustarte the speedup with BVH.</p>
+    <div align="center" >
+        <table style="width: 100%;">
+            <tr>
+                <td align="middle">
+                <img src="images/cow.png" width="400px" />
+                <figcaption align="middle">Without BVH - 13.643s, With BVH - 0.0778s</figcaption>
+                </td>
+
+            </tr>
+            <tr>
+                <td align="middle">
+                    <img src="images/bettle.png" width="400px" />
+                    <figcaption align="middle">Without BVH - 21.925s, With BVH - 0.0538s</figcaption>
+                </td>
+            </tr>
+        </table>
+    </div>
+<p>
+    Clearly, the speedup with the BVH algorithm is incredible. It comes down to the concept of the time complexity of the
+    algorithm. Our initial approach, took <i>O(n)</i> time where <i>n</i> is the number of primitive elements. BVH on the other
+    hand took <i>O(log(n))</i> time, which is a massive improvement. 
+</p>
+    
+
+    <h2 align="middle">Part 3: Direct Illumination</h2>
+    <p>
+        For direct illumination, I implemented two functions, both relied on the concept of how much weight we 
+        put on the surrounding area. The former function, which does a uniform hemisphere sampling puts equal weight on
+        all the directions (and has a static pdf as a result). The other approach is called importance sampling, and unlike
+        its counterpart, it biased the direction we cast rays, mostly in a direction where a light source is most likely to be placed.
+        Since we need to have some idea where the light sources are placed, the functions introduce additional complexity in terms of
+        an extra <i>for</i> loop where we iterate over the light sources in the scene. For most of the images though, this does not have a 
+        significant impact on the render time.
+    </p>
+    <p>
+        Below is a comparison between hemisphere and importance sampling for the rabbit.
+    </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBbunny_H_16_8.png" width="400px" />
+                    <figcaption align="middle">Hemisphere Sampling (s=16, l=8).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/CBbunny_H_64_32.png" width="400px" />
+                        <figcaption align="middle">Hemisphere Sampling (s=64, l=32).</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBbunny_H_1_1_imp.png" width="400px" />
+                    <figcaption align="middle">Importance Sampling (s=1, l=1).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/CBbunny_H_64_32_imp.png" width="400px" />
+                        <figcaption align="middle">Importance Sampling (s=64, l=32).</figcaption>
+                        </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            Below is a comparison between hemisphere and importance sampling for the spheres.
+        </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_I_1_1.png" width="400px" />
+                    <figcaption align="middle">Importance Sampling (s=1, l=1).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/spheres_I_1_4.png" width="400px" />
+                        <figcaption align="middle">Importance Sampling (s=1, l=4).</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_I_1_16.png" width="400px" />
+                    <figcaption align="middle">Importance Sampling (s=1, l=16).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/spheres_I_1_64.png" width="400px" />
+                        <figcaption align="middle">Importance Sampling (s=1, l=64).</figcaption>
+                        </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            As we can see, importance sampling results in less noise than hemisphere sampling. Hemisphere 
+            sampling will become even worse if we are dealing with a point light source, as fewer rays will 
+            intersect the source. Importance sampling, in general, is more useful because we can provide a higher
+            resolution image with fewer pixel samples. Put another way, hemisphere sampling requires more rays to converge.
+        </p>
+        <h2 align="middle">Part 4: Global Illumination</h2>
+
+        <p>
+            While direct illumination gives aesthetically pleasing renders, one can easily spot that it is not 'natural'.
+            The reason for this is that - in real life - light bounces, often multiple times. And so, the goal of global illumination
+            is to provide renders that do look 'natural'. As light bounces multiple times, we need some criteria to keep track of 
+            how many times a light has bounced, and terminate it at some point to prevent infinite recursion. The function, <i>at_least_one_bounce_radiance</i>,
+            does just that. As light is continuous in real life, and we cannot realistically model it in our computer machines, we introduce 
+            Russian roulette, which kills a ray (ouch) with some probability <i>p</i> every time it is about to rebound. In the algorithm,
+            I chose the value to be 0.35.
+        </p>
+        <p>
+            Below is our favorite picture of the rabbit in direct vs global illumination.
+        </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_H_1024_4.png" width="400px" />
+                    <figcaption align="middle">Direct Illumination (s=1024, l=4, time=13.72s).</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_G_1024_4.png" width="400px" />
+                    <figcaption align="middle">Global Illumination (s=1024, l=4, time=180.49s).</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            As expected, the global illumination picture gives a more 'natural' look to our beloved rabbit. Below
+            are more pictures of it with different <i>max_ray_depth</i>s.
+        </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_1024_4_0.png" width="400px" />
+                    <figcaption align="middle">Global Illumination (s=1024, l=4, m=0, time=8.44s).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/bunny_1024_4_1.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=1024, l=4, m=1, time=12.01s).</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                        <img src="images/bunny_1024_4_2.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=1024, l=4, m=2, time=14.63s).</figcaption>
+                        </td>
+                        <td align="middle">
+                            <img src="images/bunny_1024_4_3.png" width="400px" />
+                            <figcaption align="middle">Global Illumination (s=1024, l=4, m=3, time=121.95s).</figcaption>
+                        </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                        <img src="images/bunny_1024_4_100.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=1024, l=4, m=100, time=206.2091s).</figcaption>
+                        </td>
+    
+                </tr>
+            </table>
+        </div>
+        <p>
+            Below, we can find the spheres scene rendered with sample-per pixel rates from 1 t 1024 with 4 light rays.
+        
+        </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_1_4_2.png" width="400px" />
+                    <figcaption align="middle">Global Illumination (s=1, l=4, m=2, time=0.17s).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/spheres_2_4_2.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=2, l=4, m=1, time=0.35s).</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                        <img src="images/spheres_4_4_2.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=4, l=4, m=2, time=0.65s).</figcaption>
+                        </td>
+                        <td align="middle">
+                            <img src="images/spheres_8_4_2.png" width="400px" />
+                            <figcaption align="middle">Global Illumination (s=8, l=4, m=2, time=1.35s).</figcaption>
+                        </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                        <img src="images/spheres_16_4_2.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=16, l=4, m=2, time=2.60s).</figcaption>
+                        </td>
+                        <td align="middle">
+                            <img src="images/spheres_32_4_2.png" width="400px" />
+                            <figcaption align="middle">Global Illumination (s=32, l=4, m=2, time=5.41s).</figcaption>
+                            </td>
+        
+                </tr>
+
+                <tr>
+                    <td align="middle">
+                        <img src="images/spheres_64_4_2.png" width="400px" />
+                        <figcaption align="middle">Global Illumination (s=64, l=4, m=2, time=7.26s).</figcaption>
+                        </td>
+                        <td align="middle">
+                            <img src="images/spheres_1024_4_2.png" width="400px" />
+                            <figcaption align="middle">Global Illumination (s=1024, l=4, m=2, time=13.74s).</figcaption>
+                            </td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            I did not end up using Hives at all, because my monster machine could hadle the renders much faster :)
+        </p>
+
+        <h2 align="middle">Part 5: Adaptive Sampling</h2>
+        <p>
+            The main idea behind adaptive sampling is that not all pixels converge at the same rate. 
+            By keeping track of the mean and standard deviation of a pixel. We then can check whether it has
+            converged (and hence stop casting rays) by computing the <i>I</i> value corresponding to the confidence interval
+            of pixel's distribution. 
+    </p>
+    <p>
+        Below is the result of the adaptive sampling render of the rabbit, along with its heatmap. We can tell from the heatmap which
+        regions took longer to converge. Mostly, those are in the lower body of the rabbit, where it touches the ground. This is logical as that 
+        region would be most impacted by light bounces, as we have seen from previous parts.
+    </p>
+        <div align="center" >
+            <table style="width: 100%;">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_on_rocks.png" width="400px" />
+                    <figcaption align="middle">Global Illumination (s=2048, l=1, m=5, time=130.39s).</figcaption>
+                    </td>
+                    <td align="middle">
+                        <img src="images/bunny_on_rocks_rate.png" width="400px" />
+                        <figcaption align="middle">Adaptive Sampling (s=2048, l=1, m=5, time=130.39s).</figcaption>
+                        </td>
+                </tr>
+                </table>
+                </div>
+        
+</div>
+</body>
 </html>
+
+
+
+

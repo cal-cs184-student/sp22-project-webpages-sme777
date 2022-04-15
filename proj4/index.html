@@ -1,7 +1,469 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<style>
+		body {
+			/* padding: 100px; */
+			width: 1000px;
+			margin: auto;
+			text-align: left;
+			font-weight: 300;
+			font-family: 'Open Sans', sans-serif;
+			color: #121212;
+		}
+
+		h1,
+		h2,
+		h3,
+		h4 {
+			font-family: 'Source Sans Pro', sans-serif;
+		}
+	</style>
+	<title>CS 184 Cloth Sim</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+	<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+	<h1 align="middle">Project 4: Cloth Sim</h1>
+	<h2 align="middle">Samson Petrosyan</h2>
+
+	<br><br>
+
+	<div>
+
+		<h2 align="middle">Overview</h2>
+		<p>Give a high-level overview of what you implemented in this project. Think about what you've built as a whole.
+			Share your thoughts on what interesting things you've learned from completing the project.</p>
+
+		<h2 align="middle">Part I: Masses and springs</h2>
+		<p>
+			Below are some screenshots of <i>scene/pinned2.json</i> from different viewing angles.
+		</p>
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part1_2.png" width="800px" />
+						<!-- <figcaption align="middle">Adaptive Sampling (s=2048, l=1, m=5, time=130.39s).</figcaption> -->
+					</td>
+				</tr>
+				<tr>
+					<td align="middle">
+						<img src="images/part1_1.png" width="800px" />
+						<!-- <figcaption align="middle">Global Illumination (s=2048, l=1, m=5, time=130.39s).</figcaption> -->
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+			Below are screenshots of the spring-mass system with different active constraints.
+		</p>
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part1_no_shear.png" width="800px" />
+						<figcaption align="middle">Wireframe without shearing constraints.</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td align="middle">
+						<img src="images/part1_shear.png" width="800px" />
+						<figcaption align="middle">Wireframe with only shearing constraints.</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td align="middle">
+						<img src="images/part1_all.png" width="800px" />
+						<figcaption align="middle">Wireframe with all constraints.</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<h2 align="middle">Part II: Simulation via numerical integration</h2>
+		<p>
+			Below are the renders of cloth with changes in ks, while density and damping are kept at default.
+		</p>
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part2_1.png" width="800px" />
+						<figcaption align="middle">Wireframe without shearing constraints.</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td align="middle">
+						<img src="images/part2_2.png" width="800px" />
+						<figcaption align="middle">Cloth with ks=250 N/m</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td align="middle">
+						<img src="images/part2_3.png" width="800px" />
+						<figcaption align="middle">Cloth with ks=2500 N/m</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part2_4.png" width="800px" />
+						<figcaption align="middle">Cloth with ks=10000 N/m</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part2_5.png" width="800px" />
+						<figcaption align="middle">Cloth with ks=100000 N/m</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<p>
+			Below are the renders of cloth with changes in density, while ks and damping are kept at default.
+		</p>
+
+		<table style="width: 100%;">
+			<tr>
+				<td align="middle">
+					<img src="images/part2_6.png" width="800px" />
+					<figcaption align="middle">Cloth with density=30 g/cm^2</figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td align="middle">
+					<img src="images/part2_7.png" width="800px" />
+					<figcaption align="middle">Cloth with density=60 g/cm^2</figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td align="middle">
+					<img src="images/part2_8.png" width="800px" />
+					<figcaption align="middle">Cloth with density=120 g/cm^2</figcaption>
+				</td>
+			</tr>
+
+			<tr>
+				<td align="middle">
+					<img src="images/part2_9.png" width="800px" />
+					<figcaption align="middle">Cloth with density=6 g/cm^2</figcaption>
+				</td>
+			</tr>
+
+			<tr>
+				<td align="middle">
+					<img src="images/part2_10.png" width="800px" />
+					<figcaption align="middle">Cloth with density=3 g/cm^2</figcaption>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part2_4pin.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/pinned4.json</i> with the default parameters
+						</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h2 align="middle">Part III: Handling collisions with other objects</h2>
+
+		<p>
+			Below are renders for the <i>scene/sphere.json</i> in its final resting state with ks set to
+			<strong>500</strong>, <strong>5000</strong>, and <strong>50000</strong>.
+		</p>
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part3_500.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/sphere.json</i> with <strong>ks=500</strong>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part3_5000.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/sphere.json</i> with <strong>ks=5000</strong>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part3_50000.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/sphere.json</i> with <strong>ks=50000</strong>
+						</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<p>
+			Below are some fun renders for the <i>scene/plane.json</i> after completing the shader portion of the project.
+		</p>
+
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part3_camp.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/plane.json</i> with texture
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part3_mirror.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/plane.json</i> with mirrors
+						</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h2 align="middle">Part IV: Handling self-collisions</h2>
+
+		<p>
+			Below is a pictorial timeline of cloth falling and folding on itself.
+		</p>
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part4_1.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> at t=1
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_2.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> at t=2
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_3.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> at t=3
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_4.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> at t=4
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_5.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> at t=5
+						</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<p>
+			Below are pictorial timelines of the cloth falling and folding on itself with different <i>ks</i>
+			and <i>density</i>.
+		</p>
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part4_ks_50k_d_100.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> with ks=50000 and density=100 at t=1
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_ks_50k_d_100_2.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> with ks=50000 and density=100 at t=2
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_ks_500_d5.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> with ks=500 and density=5 at t=1
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part4_ks_500_d5_2.png" width="800px" />
+						<figcaption align="middle">Render of <i>scene/selfCollision.json</i> with ks=500 and density=5 at t=2
+						</figcaption>
+					</td>
+				</tr>
+
+			</table>
+		</div>
+		
+		<h2 align="middle">Part V: Shaders</h2>
+			<p>
+				Both vertex and fragment shaders use GLSL which is executed directly by the graphics pipeline.
+				Vertex shaders compute the positions of the given shape in a 3D coordinate space, while fragment shaders
+				compute the shape's color, lighting, and other attributes. Fragment shader is run only after the vertex shader
+				successfuly finishes execution, where the former's variables are also passed from. Fragment shader works on coloring
+				and other attributes, and outputs per pixel color values.
+			</p>
+			<p>
+				Below are renders for Blinn-Phong shading.	
+			</p>
+			<div align="center">
+				<table style="width: 100%;">
+					<tr>
+						<td align="middle">
+							<img src="images/part5_1.png" width="800px" />
+							<figcaption align="middle">Blinn-Phong shading
+							</figcaption>
+						</td>
+					</tr>
+	
+					<tr>
+						<td align="middle">
+							<img src="images/part5_2.png" width="800px" />
+							<figcaption align="middle">Diffuse shading
+							</figcaption>
+						</td>
+					</tr>
+	
+					<tr>
+						<td align="middle">
+							<img src="images/part5_3.png" width="800px" />
+							<figcaption align="middle">Specular shading
+							</figcaption>
+						</td>
+					</tr>
+	
+					<tr>
+						<td align="middle">
+							<img src="images/part5_4.png" width="800px" />
+							<figcaption align="middle">Ambient shading
+							</figcaption>
+						</td>
+					</tr>
+	
+				</table>
+			</div>
+		<p>
+			Below is a picture of Doge as a texture in our favorite sphere.
+		</p>
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part5_doge.png" width="800px" />
+						<figcaption align="middle">Doge on Ball
+						</figcaption>
+					</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<p>
+			Below are renders of bump and displacement mapping on the cloth and on the sphere.
+		</p>		
+
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part5_bump_1.png" width="800px" />
+						<figcaption align="middle">Bump mapping of <i>sphere.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part5_bump_2.png" width="800px" />
+						<figcaption align="middle">Bump mapping of <i>sphere.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part5_disp_1.png" width="800px" />
+						<figcaption align="middle">Displacement mapping of <i>sphere.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part5_disp_2.png" width="800px" />
+						<figcaption align="middle">Displacement mapping of <i>sphere.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<p>
+			Below are renders of the mirror shader on the cloth and on the sphere.
+		</p>
+		<div align="center">
+			<table style="width: 100%;">
+				<tr>
+					<td align="middle">
+						<img src="images/part5_mirror_1.png" width="800px" />
+						<figcaption align="middle">Mirror render of <i>pinned4.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+				<tr>
+					<td align="middle">
+						<img src="images/part5_mirror_2.png" width="800px" />
+						<figcaption align="middle">Mirror render of <i>sphere.json</i>
+						</figcaption>
+					</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<h2 align="middle">Part VI: Extra Credit</h2>
+
+		<p>
+			Left as an exercise for the reader.
+		</p>
+</body>
+
 </html>
